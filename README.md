@@ -1,4 +1,4 @@
-# MOdular Testbed for Researching Attacks (MOTRA) - compose
+# MOdular Testbed for Researching Attacks (MOTRA) - setups
 
 <p align="center">
   <img src=motra.jpeg?raw=true" alt="motra logo" width="350"/>
