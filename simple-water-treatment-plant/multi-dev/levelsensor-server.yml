@@ -1,19 +1,14 @@
-# https://rosengren.me/blog/shared-variables-in-docker-compose/
-x-common-spec:
-  sensorcontext: &sensor https://github.com/Laboratory-for-Safe-and-Secure-Systems/motra-images.git#main:opcua/server/nodejs-node-opcua/latest
-  watercontext: &water https://github.com/Laboratory-for-Safe-and-Secure-Systems/motra-images.git#main:opcua/water-tank-simulation/python-opcua-asyncio/latest
-
 services:
   levelsensor-server:
     container_name: "levelsensor-server"
     hostname: "levelsensor-server"
     image: node-server:latest
-    build:  
-      context: *sensor
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
       args:
-        NODESET_MODEL: "FullSystem.NodeSet2.xml"
+        NODESET_MODEL: "Tank.NodeSet2.xml"
       additional_contexts:
-        container_context: *sensor
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
         nodeset_context: ../meta/demo-nodeset2
         companion_context: ../meta/companion-specifications
         configuration_context: ../meta/server-configuration
@@ -28,7 +23,7 @@ services:
     environment:
       - SERVER_URI=opc.tcp://levelsensor-server:4840/KRITIS3M/
     build:
-      context: *water
+      context: ${IMAGE_REPO_URL}#main:opcua/water-tank-simulation/python-opcua-asyncio/latest
     networks:
       - levelsensor-net
     depends_on:
