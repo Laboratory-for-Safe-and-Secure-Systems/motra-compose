@@ -1,0 +1,11 @@
+services:
+  headunit-dashboard:
+    container_name: "headunit-dashboard"
+    hostname: "headunit-dashboard"
+    image: dashboard:latest
+    environment:
+      - SERVER_URI=opc.tcp://172.17.0.1:4842/KRITIS3M/
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/dashboard/python-opcua-asyncio/latest
+    ports:
+      - "8050:8050"

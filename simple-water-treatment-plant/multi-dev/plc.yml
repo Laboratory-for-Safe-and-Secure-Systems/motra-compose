@@ -1,0 +1,50 @@
+services:
+  plc-server:
+    container_name: "plc-server"
+    hostname: "plc-server"
+    image: node-server:latest
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+      args:
+        NODESET_MODEL: "PLC.NodeSet2.xml"
+      additional_contexts:
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+        nodeset_context: ../meta/demo-nodeset2
+        companion_context: ../meta/companion-specifications
+        configuration_context: ../meta/server-configuration
+    ports:
+      - "4842:4840"
+    networks:
+      - plc-net
+  plc-historian:
+    container_name: "plc-historian"
+    hostname: "plc-historian"
+    image: historian:latest
+    environment:
+      - SERVER_URI=opc.tcp://plc-server:4840/KRITIS3M/
+    volumes:
+      - /tmp/docker/database:/database
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/historian/python-opcua-asyncio/latest
+    networks:
+      - plc-net
+    depends_on:
+      - plc-server
+  plc-logic:
+    container_name: "plc-logic"
+    hostname: "plc-logic"
+    image: plc-logic:latest
+    environment:
+      - PS_URI=opc.tcp://plc-server:4840
+      - LSS_URI=opc.tcp://172.17.0.1:4840
+      - VS_URI=opc.tcp://172.17.0.1:4841
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/plc-logic/python-opcua-asyncio/latest
+    networks:
+      - plc-net
+    depends_on:
+      - plc-server
+networks:
+  plc-net:
+    name: plc-net
+    external: false

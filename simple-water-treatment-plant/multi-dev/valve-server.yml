@@ -1,0 +1,15 @@
+services:
+  valve-server:
+    container_name: "valve-server"
+    image: node-server:latest
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+      args:
+        NODESET_MODEL: "Valve.NodeSet2.xml"
+      additional_contexts:
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+        nodeset_context: ../meta/demo-nodeset2
+        companion_context: ../meta/companion-specifications
+        configuration_context: ../meta/server-configuration
+    ports:
+      - "4841:4840"
