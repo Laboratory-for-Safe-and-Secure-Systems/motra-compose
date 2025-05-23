@@ -1,0 +1,116 @@
+services:
+  headunit-dashboard:
+    container_name: "headunit-dashboard"
+    hostname: "headunit-dashboard"
+    image: dashboard:latest
+    environment:
+      - SERVER_URI=opc.tcp://plc-server:4840/KRITIS3M/
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/dashboard/python-opcua-asyncio/latest
+    ports:
+      - "8050:8050"
+    networks:
+      - it-net
+    depends_on:
+      - plc-server
+  plc-server:
+    container_name: "plc-server"
+    hostname: "plc-server"
+    image: node-server:latest
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+      args:
+        NODESET_MODEL: "PLC.NodeSet2.xml"
+      additional_contexts:
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+        nodeset_context: ../meta/demo-nodeset2
+        companion_context: ../meta/companion-specifications
+        configuration_context: ../meta/server-configuration
+    networks:
+      - it-net
+      - plc-net
+  plc-historian:
+    container_name: "plc-historian"
+    hostname: "plc-historian"
+    image: historian:latest
+    environment:
+      - SERVER_URI=opc.tcp://plc-server:4840/KRITIS3M/
+    volumes:
+      - /tmp/docker/database:/database
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/historian/python-opcua-asyncio/latest
+    networks:
+      - plc-net
+    depends_on:
+      - plc-server
+  plc-logic:
+    container_name: "plc-logic"
+    hostname: "plc-logic"
+    image: plc-logic:latest
+    environment:
+      - PS_URI=opc.tcp://plc-server:4840
+      - LSS_URI=opc.tcp://levelsensor-server:4840
+      - VS_URI=opc.tcp://valve-server:4840
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/plc-logic/python-opcua-asyncio/latest
+    networks:
+      - plc-net
+      - ot-net
+    depends_on:
+      - plc-server
+      - levelsensor-server
+      - valve-server
+  levelsensor-server:
+    container_name: "levelsensor-server"
+    hostname: "levelsensor-server"
+    image: node-server:latest
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+      args:
+        NODESET_MODEL: "Tank.NodeSet2.xml"
+      additional_contexts:
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+        nodeset_context: ../meta/demo-nodeset2
+        companion_context: ../meta/companion-specifications
+        configuration_context: ../meta/server-configuration
+    networks:
+      - levelsensor-net
+      - ot-net
+  water-tank-simulation:
+    container_name: "water-tank-simulation"
+    hostname: "water-tank-simulation"
+    image: water-tank-simulation:latest
+    environment:
+      - SERVER_URI=opc.tcp://levelsensor-server:4840/KRITIS3M/
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/water-tank-simulation/python-opcua-asyncio/latest
+    networks:
+      - levelsensor-net
+    depends_on:
+      - levelsensor-server
+  valve-server:
+    container_name: "valve-server"
+    image: node-server:latest
+    build:
+      context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+      args:
+        NODESET_MODEL: "Valve.NodeSet2.xml"
+      additional_contexts:
+        container_context: ${IMAGE_REPO_URL}#main:opcua/server/nodejs-node-opcua/latest
+        nodeset_context: ../meta/demo-nodeset2
+        companion_context: ../meta/companion-specifications
+        configuration_context: ../meta/server-configuration
+    networks:
+      - ot-net
+networks:
+  it-net:
+    name: it-net
+  plc-net:
+    name: plc-net
+    external: false
+  ot-net:
+    name: ot-net
+  levelsensor-net:
+    name: levelsensor-net
+    external: false
+
